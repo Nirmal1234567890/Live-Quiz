@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Quiz</title>
+    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+    <style>
+        /* Reset & font */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(120deg, #f4f7ff, #e8ecf7);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .container {
+            background: #ffffff;
+            width: 380px;
+            padding: 35px 30px;
+            border-radius: 22px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            animation: fadeUp 0.8s ease-out;
+            border-top: 5px solid #6b8cff;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(25px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            margin-bottom: 25px;
+            font-size: 28px;
+            color: #3c4a8f;
+            font-weight: 600;
+        }
+
+        input {
+            width: 90%;
+            padding: 14px 12px;
+            margin: 10px 0;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+            outline: none;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: #6b8cff;
+            box-shadow: 0 0 10px rgba(107, 140, 255, 0.25);
+        }
+
+        button {
+            width: 94%;
+            padding: 14px;
+            margin-top: 15px;
+            background: linear-gradient(135deg, #6b8cff, #8aa8ff);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 17px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #8aa8ff, #6b8cff);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            transform: translateY(-3px);
+        }
+
+        ::placeholder {
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Create Quiz</h2>
+
+    <input id="question" placeholder="Enter Question"><br>
+    <input id="optA" placeholder="Option A"><br>
+    <input id="optB" placeholder="Option B"><br>
+    <input id="optC" placeholder="Option C"><br>
+    <input id="optD" placeholder="Option D"><br>
+
+    <button onclick="sendQuiz()">Send Quiz</button>
+</div>
+
+<script>
+const socket = io(`${window.location.protocol}//${window.location.hostname}:3000`);
+
+// Function to send quiz to students
+function sendQuiz() {
+    const quiz = {
+        question: document.getElementById("question").value,
+        options: {
+            A: document.getElementById("optA").value,
+            B: document.getElementById("optB").value,
+            C: document.getElementById("optC").value,
+            D: document.getElementById("optD").value
+        },
+        students: [] // send to all
+    };
+
+    socket.emit("teacher_create_quiz", quiz);
+    console.log("Quiz sent:", quiz);
+    alert("Quiz sent to students!");
+}
+
+// Session Timer
+function startSessionTimer() {
+    const token = localStorage.getItem("quizToken"); 
+    if (!token) return;
+
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const exp = payload.exp * 1000;
+    const remainingTime = exp - Date.now();
+
+    if (remainingTime <= 0) {
+        logoutUser();
+        return;
+    }
+
+    setTimeout(logoutUser, remainingTime);
+}
+
+function logoutUser() {
+    alert("Session expired. Logging out.");
+    localStorage.clear();
+    location.href = "login.html";
+}
+
+startSessionTimer();
+</script>
+
+</body>
+</html>

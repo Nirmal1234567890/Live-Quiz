@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Dashboard</title>
+
+<style>
+    /* Reset */
+    * { margin:0; padding:0; box-sizing:border-box; font-family:"Poppins",sans-serif; }
+
+    /* Light Gradient Background (Same as Login Page) */
+    body {
+        background: linear-gradient(120deg, #f4f7ff, #e8ecf7);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+
+    /* Dashboard Card (Same Style as Login Card) */
+    .dashboard {
+        width: 380px;
+        background: #ffffff;
+        padding: 35px 30px;
+        border-radius: 22px;
+        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        animation: fadeUp 0.8s ease-out;
+        border-top: 5px solid #6b8cff;
+    }
+
+    /* Animation */
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(25px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Headings */
+    h1 {
+        font-size: 28px;
+        color: #3c4a8f;
+        margin-bottom: 8px;
+        font-weight: 700;
+    }
+
+    h3 {
+        font-size: 17px;
+        margin-bottom: 22px;
+        color: #555;
+    }
+
+    /* Buttons - Same Style as Login Button */
+    button {
+        width: 95%;
+        padding: 14px;
+        margin: 12px 0;
+        background: linear-gradient(135deg, #6b8cff, #8aa8ff);
+        color: white;
+        font-size: 18px;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        letter-spacing: .5px;
+        transition: .3s;
+    }
+
+    button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        background: linear-gradient(135deg, #8aa8ff, #6b8cff);
+    }
+
+    /* Logout button - red but same style */
+    #logoutBtn {
+        background: #ff4d4d;
+    }
+    #logoutBtn:hover {
+        background: #d60000;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="dashboard">
+    <h1>Student Dashboard</h1>
+    <h3 id="welcomeText">Loading...</h3>
+
+    <button onclick="location.href='attend_quiz.html'">🎯 Attend Quiz</button>
+    <button onclick="location.href='view_score.html'">📊 View Score</button>
+    <button id="logoutBtn" onclick="logout()">🚪 Logout</button>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+const socket = io("http://192.168.1.100:3000");
+
+async function validate() {
+    const token = localStorage.getItem("quizToken");
+    if (!token) { alert("Please login"); location.href="login.html"; return; }
+
+    try {
+        const res = await fetch("/dashboard", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+
+        if (!res.ok) {
+            alert("Session expired");
+            localStorage.clear();
+            location.href="login.html";
+            return;
+        }
+
+        const data = await res.json();
+
+        if (data.user.role !== "student") {
+            alert("Access denied");
+            location.href="login.html";
+            return;
+        }
+
+        document.getElementById("welcomeText").innerText =
+            "Welcome, " + data.user.userid + " 👋";
+
+    } catch (err) {
+        console.error(err);
+        alert("Network error");
+        location.href="login.html";
+    }
+}
+
+validate();
+
+/* Session Timer */
+function startSessionTimer() {
+    const token = localStorage.getItem("quizToken");
+    if (!token) return;
+
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const exp = payload.exp * 1000;
+    const remainingTime = exp - Date.now();
+
+    if (remainingTime <= 0) {
+        logoutUser();
+        return;
+    }
+
+    setTimeout(logoutUser, remainingTime);
+}
+
+function logoutUser() {
+    alert("Session expired. Logging out.");
+    localStorage.clear();
+    location.href = "login.html";
+}
+
+startSessionTimer();
+
+function logout() {
+    localStorage.clear();
+    location.href = "login.html";
+}
+</script>
+
+</body>
+</html>

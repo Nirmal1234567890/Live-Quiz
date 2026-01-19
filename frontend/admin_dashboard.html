@@ -1,0 +1,175 @@
+<!-- frontend/admin_dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard</title>
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+        background: linear-gradient(120deg, #f4f7ff, #e8ecf7);
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 15px;
+    }
+
+    .dashboard {
+        width: 380px;
+        padding: 35px 30px;
+        background: #ffffff;
+        border-radius: 22px;
+        box-shadow: 0 10px 35px rgba(0,0,0,0.1);
+        text-align: center;
+        animation: fadeUp 0.8s ease-out;
+        border-top: 5px solid #6b8cff;
+    }
+
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(25px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+        font-size: 28px;
+        color: #3c4a8f;
+        margin-bottom: 12px;
+    }
+
+    h3 {
+        font-size: 18px;
+        color: #555;
+        margin-bottom: 25px;
+    }
+
+    button {
+        width: 90%;
+        padding: 14px;
+        margin: 12px 0;
+        font-size: 16px;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        background: linear-gradient(135deg, #6b8cff, #8aa8ff);
+        color: white;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    button:hover {
+        background: linear-gradient(135deg, #8aa8ff, #6b8cff);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+        transform: translateY(-3px);
+    }
+
+    #logoutBtn {
+        background: #ff4d4d;
+    }
+
+    #logoutBtn:hover {
+        background: #d60000;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="dashboard">
+    <h1>Admin Dashboard</h1>
+    <h3 id="welcomeText">Loading...</h3>
+
+    <button onclick="location.href='manage_users.html'">👥 Manage Users</button>
+    <button onclick="location.href='view_reports.html'">📑 View Reports</button>
+    <button id="logoutBtn" onclick="logout()">🚪 Logout</button>
+</div>
+
+<script>
+async function validate(){
+  const token = localStorage.getItem("quizToken");
+  if(!token){ 
+      alert("Please login"); 
+      location.href="login.html"; 
+      return; 
+  }
+
+  try{
+    const res = await fetch("/dashboard",{ 
+        headers:{ "Authorization":"Bearer "+token } 
+    });
+
+    if(!res.ok){ 
+        alert("Session expired"); 
+        localStorage.clear(); 
+        location.href="login.html"; 
+        return; 
+    }
+
+    const data = await res.json();
+
+    if(data.user.role !== "admin"){ 
+        alert("Access denied"); 
+        location.href="login.html"; 
+        return; 
+    }
+
+    document.getElementById("welcomeText").innerText = 
+        "Welcome, " + data.user.userid + " 👋";
+
+    startWebSocket(data.user.userid);
+
+  } catch(e){
+    console.error(e);
+    alert("Network error");
+    location.href="login.html";
+  }
+}
+
+validate();
+
+function logout(){ 
+    localStorage.clear(); 
+    location.href="login.html"; 
+}
+
+/********************** 🔵 WebSocket Added Below **********************/
+let socket;
+
+function startWebSocket(userid) {
+    socket = new WebSocket("ws://localhost:3000");
+
+    socket.onopen = () => {
+        console.log("WebSocket connected");
+
+        socket.send(JSON.stringify({
+            type: "join",
+            role: "admin",
+            userid: userid
+        }));
+    };
+
+    socket.onmessage = (msg) => {
+        const data = JSON.parse(msg.data);
+        console.log("WS:", data);
+
+        if (data.type === "system_alert") {
+            alert("SYSTEM ALERT: " + data.message);
+        }
+    };
+
+    socket.onclose = () => {
+        console.warn("WebSocket disconnected");
+    };
+}
+</script>
+
+</body>
+</html>

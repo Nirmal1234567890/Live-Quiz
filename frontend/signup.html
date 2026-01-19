@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>LiveQuiz+ — Sign up</title>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family:'Poppins', sans-serif; }
+
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg,#f4f7ff,#e8ecf7);
+    padding: 24px;
+  }
+
+  .card {
+    width: 380px;
+    max-width: 100%;
+    background: #fff;
+    border-radius: 22px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+    border-top: 5px solid #6b8cff;
+    animation: fadeUp 0.8s ease-out;
+  }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform: translateY(25px); }
+    to { opacity:1; transform: translateY(0); }
+  }
+
+  .logo {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 10px;
+    border-radius: 18px;
+    background: linear-gradient(135deg,#6b8cff,#8aa8ff);
+    display: grid;
+    place-items: center;
+    color: white;
+    font-weight: 700;
+    font-size: 22px;
+  }
+
+  h1 {
+    margin-bottom: 8px;
+    font-size: 22px;
+    color: #333;
+  }
+
+  p.lead {
+    margin-bottom: 18px;
+    color: #555;
+    font-size: 14px;
+  }
+
+  .form-row { margin-bottom: 14px; text-align: left; }
+
+  label {
+    display: block;
+    font-size: 13px;
+    color: #444;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+
+  input, select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    font-size: 15px;
+    outline: none;
+    transition: all 0.3s ease;
+    background: #fff;
+  }
+
+  input:focus, select:focus {
+    border-color: #6b8cff;
+    box-shadow: 0 6px 15px rgba(106, 136, 255, 0.2);
+  }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 13px;
+    margin-top: 12px;
+    border-radius: 12px;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg,#6b8cff,#8aa8ff);
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+  }
+
+  .muted {
+    margin-top: 14px;
+    font-size: 14px;
+    color: #555;
+  }
+
+  .muted a {
+    color: #6b8cff;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 28px;
+    background: rgba(0,0,0,0.82);
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    display: none;
+    z-index: 9999;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+  }
+</style>
+</head>
+<body>
+
+<div class="card" role="main" aria-labelledby="title">
+  <div class="logo">LQ+</div>
+
+  <h1 id="title">Create your LiveQuiz+ account</h1>
+  <p class="lead">Sign up as Student, Teacher or Admin</p>
+
+  <form id="signupForm" onsubmit="onSignup(event)" novalidate>
+    <div class="form-row">
+      <label for="userid">User ID</label>
+      <input id="userid" name="userid" type="text" autocomplete="username" placeholder="choose a user id" required />
+    </div>
+
+    <div class="form-row">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="new-password" placeholder="create a password" required />
+    </div>
+
+    <div class="form-row">
+      <label for="role">Select role</label>
+      <select id="role" name="role" required>
+        <option value="" disabled selected>Choose role</option>
+        <option value="student">Student</option>
+        <option value="teacher">Teacher</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+
+    <button class="btn" type="submit">Create account</button>
+  </form>
+
+  <p class="muted">Already have an account? <a href="login.html">Login</a></p>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+  const toastEl = document.getElementById('toast');
+  function showToast(msg, time = 2500) {
+    toastEl.textContent = msg;
+    toastEl.style.display = 'block';
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=> toastEl.style.display = 'none', time);
+  }
+
+  async function onSignup(e){
+    e.preventDefault();
+    const userid = document.getElementById('userid').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const role = document.getElementById('role').value;
+
+    if (!userid || !password || !role) {
+      showToast('Please fill all fields');
+      return;
+    }
+
+    try {
+      const res = await fetch('http://localhost:3000/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userid, password, role })
+      });
+      const data = await res.json();
+      showToast(data.message || 'Server responded');
+
+      if ((data.message || '').toLowerCase().includes('saved')) {
+        setTimeout(()=> { window.location.href = 'login.html'; }, 900);
+      }
+
+    } catch (err) {
+      console.error(err);
+      showToast('Network error — please try again');
+    }
+  }
+</script>
+
+</body>
+</html>

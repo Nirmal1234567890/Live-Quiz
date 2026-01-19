@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LiveQuiz+ Login</title>
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+        background: linear-gradient(120deg, #f4f7ff, #e8ecf7);
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 15px;
+    }
+
+    .container {
+        width: 380px;
+        padding: 35px 30px;
+        background: #ffffff;
+        border-radius: 22px;
+        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        animation: fadeUp 0.8s ease-out;
+        border-top: 5px solid #6b8cff;
+    }
+
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(25px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    h2 {
+        margin-bottom: 20px;
+        font-size: 28px;
+        color: #3c4a8f;
+        font-weight: 700;
+    }
+
+    input, select {
+        width: 92%;
+        padding: 14px 12px;
+        margin-top: 15px;
+        border-radius: 12px;
+        border: 1px solid #d4d4d4;
+        background: #f7f9ff;
+        font-size: 16px;
+        outline: none;
+        transition: all 0.25s ease;
+    }
+
+    input:focus, select:focus {
+        border-color: #6b8cff;
+        box-shadow: 0 0 10px rgba(107, 140, 255, 0.25);
+        background: #ffffff;
+    }
+
+    select {
+        cursor: pointer;
+        background-color: #f7f9ff;
+    }
+
+    button {
+        width: 94%;
+        padding: 14px;
+        margin-top: 25px;
+        background: linear-gradient(135deg, #6b8cff, #8aa8ff);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 17px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    button:hover {
+        background: linear-gradient(135deg, #8aa8ff, #6b8cff);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        transform: translateY(-3px);
+    }
+
+    .footer {
+        margin-top: 18px;
+        font-size: 14px;
+        color: #555;
+    }
+
+    a {
+        color: #6b8cff;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2>LiveQuiz+ Login</h2>
+
+    <input type="text" id="username" placeholder="Enter Username">
+    <input type="password" id="password" placeholder="Enter Password">
+
+    <select id="role">
+        <option value="student">Student</option>
+        <option value="teacher">Teacher</option>
+        <option value="admin">Admin</option>
+    </select>
+
+    <button onclick="login()">Login</button>
+
+    <p class="footer">✨ Simple • Fast • Educational Quiz Platform ✨</p>
+    <p style="margin-top: 12px; font-size: 15px;">
+        New user? <a href="signup.html">Create Account</a>
+    </p>
+</div>
+
+<script>
+    function login() {
+        const userid = document.getElementById("username").value.trim();
+        const pswd = document.getElementById("password").value.trim();
+        const role = document.getElementById("role").value;
+
+        if (userid === "" || pswd === "") {
+            alert("Please fill all fields");
+            return;
+        }
+
+        fetch("http://localhost:3000/check-user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userid, pswd, role })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.message);
+
+            if (data.exists) {
+                localStorage.setItem("quizToken", data.token);
+                localStorage.setItem("quizRole", data.role);
+                localStorage.setItem("quizUser", data.userid);
+
+                if(role=="student") window.location.href = "student_dashboard.html";
+                if(role=="teacher") window.location.href = "teacher_dashboard.html";
+                if(role=="admin") window.location.href = "admin_dashboard.html";
+            }
+        })
+        .catch(err => console.log(err));
+    }
+</script>
+
+</body>
+</html>
